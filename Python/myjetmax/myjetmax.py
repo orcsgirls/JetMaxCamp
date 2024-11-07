@@ -37,11 +37,12 @@ class myJetMax(hiwonder.JetMax):
         return (x-self.origin_x,y-self.origin_y,z-self.origin_z)
 
     def suck(self):
-        print("Sucker active ..\n")
+        print("Sucker active ..")
         self.sucker.suck()
+        time.sleep(1.0)
 
     def release(self):
-        print("Sucker released ..\n")
+        print("Sucker released ..")
         self.sucker.release(3.0)
         time.sleep(3.0)
 
