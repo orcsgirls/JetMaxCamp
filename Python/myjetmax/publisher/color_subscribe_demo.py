@@ -2,8 +2,6 @@ import rospy
 import json
 from std_msgs.msg import String
  
-color_data = {"color":"", "x":0, "y":0}
-
 def callback(data):
     color_data = json.loads(data.data)
     print(color_data[0]['color'])

@@ -1,3 +1,3 @@
 import time
 import random
-from .myjetmax import myJetMax
+from .myjetmax import myJetMax, myColorBlocks

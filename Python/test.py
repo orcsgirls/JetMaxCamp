@@ -22,3 +22,8 @@ jetmax.move_to( 0, 0,40, 1, relative=True)
 
 # Set angle of the sucker
 jetmax.set_angle(10)
+
+# Turn sucker on and off
+jetmax.suck()
+time.sleep(1.0)
+jetmax.release()
