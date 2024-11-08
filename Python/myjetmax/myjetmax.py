@@ -13,7 +13,7 @@ class myJetMax(hiwonder.JetMax):
         self.origin_y = -178.94
         self.origin_z = 60.80
         self.go_home()
-        print("JetMax ready ..\n")
+        print("JetMax ready ..")
 
     def move_to(self,x,y,z,duration,relative=False):
         if relative:
@@ -28,6 +28,7 @@ class myJetMax(hiwonder.JetMax):
 
     def go_home(self):
         super().go_home()
+        hiwonder.pwm_servo1.set_position(90, 0.1)
         time.sleep(3.0)
 
     def location(self, log=True):
@@ -46,3 +47,12 @@ class myJetMax(hiwonder.JetMax):
         self.sucker.release(3.0)
         time.sleep(3.0)
 
+    def set_angle(self, angle):
+        if (angle>=0 and angle <=180):
+            hiwonder.pwm_servo1.set_position(angle, 0.1)
+        else:
+            print(f"ERROR: Invalid angle {angle:6.1f}")
+
+    def get_angle(self):
+        angle=hiwonder.pwm_servo1.get_position()
+        return angle

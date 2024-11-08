@@ -15,9 +15,10 @@ jetmax.move_to( 0, 0,30, 1)
 # This moves relative to the last position 
 # Here 40 mm up.
 
-jetmax.move_to( 0, 0,40, 1,relative=True)
+jetmax.move_to( 0, 0,40, 1, relative=True)
 
 # This returns the current location of the sucker
 (cx,cy,cz) = jetmax.location()
 
-
+# Set angle of the sucker
+jetmax.set_angle(10)
