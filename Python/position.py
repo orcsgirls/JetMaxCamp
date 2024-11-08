@@ -10,4 +10,5 @@ while True:
         jetmax.move_to(float(x), float(y), float(z), 1)
     except KeyboardInterrupt:
         print('Bye ..')
+        break
 
