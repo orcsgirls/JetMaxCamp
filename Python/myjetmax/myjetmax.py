@@ -13,7 +13,7 @@ from std_msgs.msg import String
 
 class myAIBlocks():
     
-    def __init__(self, what="color"):
+    def __init__(self, what="apriltag"):
         if what != "color" and what != "apriltag":
             print('ERROR: Unknown block type')
             return
@@ -43,6 +43,13 @@ class myAIBlocks():
     @property
     def get_data(self):
         return self.data
+
+    @property
+    def get_data_wait(self):
+        data = []
+        while len(data) < 1:
+            data = self.data
+        return data
 
 #---------------------------------------------------------------------------------
 # Simplified class for JetMax Arm to be used with coordinate matte
