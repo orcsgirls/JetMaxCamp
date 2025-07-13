@@ -157,13 +157,16 @@ def image_proc(img):
                 x, y = rect[0]
                 real_x, real_y, _ = camera_to_world(state.K, state.R, state.T, np.array((x, y)).reshape((1, 1, 2)))[0][0]
                 s1 = "color: {}".format(color_name)
-                s2 = "x: {:0.1f}mm y: {:0.1f}mm".format(real_x, real_y)
-                s3 = "angle: {:0.1f}deg".format(angle)
-
+                s2 = "x: {:0.1f}mm".format(real_x)
+                s3 = "y: {:0.1f}mm".format(real_y)
+                s4 = "angle: {:0.1f}deg".format(angle)
+                font_color = (0, 255, 0)
+                font_size = 0.6
                 cv2.circle(img, (int(x), int(y)), 1, (255, 255, 255), 5)
-                cv2.putText(img, s1, (int(center_x) + 50, int(center_y)   ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
-                cv2.putText(img, s2, (int(center_x) + 50, int(center_y)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
-                cv2.putText(img, s3, (int(center_x) + 50, int(center_y)+40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                cv2.putText(img, s1, (int(center_x) + 50, int(center_y)-20), cv2.FONT_HERSHEY_SIMPLEX, font_size, font_color, 2)
+                cv2.putText(img, s2, (int(center_x) + 50, int(center_y)   ), cv2.FONT_HERSHEY_SIMPLEX, font_size, font_color, 2)
+                cv2.putText(img, s3, (int(center_x) + 50, int(center_y)+20), cv2.FONT_HERSHEY_SIMPLEX, font_size, font_color, 2)
+                cv2.putText(img, s4, (int(center_x) + 50, int(center_y)+40), cv2.FONT_HERSHEY_SIMPLEX, font_size, font_color, 2)
 
                 data.append({"color": color_name.lower(), "x":real_x, "y": real_y, "angle": angle})
 

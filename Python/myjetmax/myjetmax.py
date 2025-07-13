@@ -5,50 +5,48 @@ import json
 import threading
 from std_msgs.msg import String
 
+#---------------------------------------------------------------------------------
 # Simple interface to color position AI
-# Note that myjetmax/publisher/color_position_publisher.py needs to be running
+# Note that myjetmax/publisher/color_position_publisher.py
+#        or myjetmax/publisher/apriltag_position_publisher.py needs to be running
+#---------------------------------------------------------------------------------
 
-class myColorBlocks():
+class myAIBlocks():
     
-    def __init__(self):
-        rospy.init_node('color_subscriber')
-        self.sub = rospy.Subscriber("color_location", String, self._callback)
+    def __init__(self, what="color"):
+        if what != "color" and what != "apriltag":
+            print('ERROR: Unknown block type')
+            return
+
+        print(f"AI {what} block detector initializing ..")
+        rospy.init_node(what+'_subscriber', disable_signals=True)
+        self.sub = rospy.Subscriber(what+"_location", String, self._callback)
+        self.timer = threading.Timer(1, self._expireTimer)
         self.data = []
-        self._expireTimer()
+        print(f"AI {what} detector ready ..")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.sub.unregister()
+        self.timer.cancel()
 
     def _callback(self, data):
         self.data = json.loads(data.data)
 
     def _expireTimer(self):
+        self.timer.stop()
         self.data = []
-        self.timer = threading.Timer(1, self._expireTimer)
         self.timer.start()
 
-    def exit(self):
-        self.sub.unregister()
-        self.timer.cancel()
-
     @property
-    def blocks_detected(self):
-        return len(self.data)
+    def get_data(self):
+        return self.data
 
-    @property
-    def angle(self, id=0):
-        time.sleep(0.1)
-        return self.data[id]['angle']
-
-    @property
-    def color(self, id=0):
-        time.sleep(0.1)
-        return self.data[id]['color']
-
-    @property
-    def position(self, id=0):
-        time.sleep(0.1)
-        return (self.data[id]['x'], self.data[id]['y'])
-
-
-# Simplified class to be used with coordinate matte
+#---------------------------------------------------------------------------------
+# Simplified class for JetMax Arm to be used with coordinate matte
+#---------------------------------------------------------------------------------
 
 class myJetMax(hiwonder.JetMax):
 
@@ -61,6 +59,12 @@ class myJetMax(hiwonder.JetMax):
         self.origin_z = 60.80
         self.go_home()
         print("JetMax ready ..")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.go_home()
 
     def move_to(self,x,y,z,duration,relative=False):
         if relative:

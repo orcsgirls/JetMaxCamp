@@ -101,13 +101,17 @@ def image_proc_a(img):
         theta_x = math.atan2(rotM[2, 1], rotM[2, 2])*180.0/math.pi
 
         s1 = "id: {}".format(tag.tag_id)
-        s2 = "x: {:0.1f}mm, y: {:0.1f}mm".format(x, y)
-        s3 = "angle: {:0.1f}deg".format(theta_z)
-        s4 = "dist: {:0.0f}mm".format(distance)
-        cv2.putText(img, s1, (center[0] + 50, center[1]    ), 0, 0.5, (255, 255, 0), 2)
-        cv2.putText(img, s2, (center[0] + 50, center[1]+ 20), 0, 0.5, (255, 255, 0), 2)
-        cv2.putText(img, s3, (center[0] + 50, center[1]+ 40), 0, 0.5, (255, 255, 0), 2)
-        cv2.putText(img, s4, (center[0] + 50, center[1]+ 60), 0, 0.5, (255, 255, 0), 2)
+        s2 = "x: {:0.1f}mm".format(x)
+        s3 = "y: {:0.1f}mm".format(y)
+        s4 = "angle: {:0.1f}deg".format(theta_z)
+        s5 = "dist: {:0.1f}mm".format(distance)
+        font_color = (0, 255, 0)
+        font_size = 0.6
+        cv2.putText(img, s1, (center[0] + 50, center[1]- 40), 0, font_size, font_color, 2)
+        cv2.putText(img, s2, (center[0] + 50, center[1]- 20), 0, font_size, font_color, 2)
+        cv2.putText(img, s3, (center[0] + 50, center[1]    ), 0, font_size, font_color, 2)
+        cv2.putText(img, s4, (center[0] + 50, center[1]+ 20), 0, font_size, font_color, 2)
+        cv2.putText(img, s5, (center[0] + 50, center[1]+ 40), 0, font_size, font_color, 2)
 
         # Data package
 
