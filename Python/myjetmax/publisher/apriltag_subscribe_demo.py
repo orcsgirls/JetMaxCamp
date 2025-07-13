@@ -3,14 +3,14 @@ import json
 from std_msgs.msg import String
  
 def callback(data):
-    color_data = json.loads(data.data)
-    if len(color_data>0:
-        print(color_data[0]['color'])
+    tag_data = json.loads(data.data)
+    if len(tag_data)>0:
+        print(tag_data[0]['id'])
     else:
         print('No data')
 
-rospy.init_node('color_subscriber')
-rospy.Subscriber("color_location", String, callback)
+rospy.init_node('apriltag_subscriber')
+rospy.Subscriber("apriltag_location", String, callback)
 print ("Waiting for messages ..")
 
 try:

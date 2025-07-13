@@ -111,6 +111,7 @@ def image_proc(img):
     frame_gb = cv2.GaussianBlur(np.copy(img), (5, 5), 5)
     frame_lab = cv2.cvtColor(frame_gb, cv2.COLOR_RGB2LAB)  # Convert rgb to lab
     blocks = []
+    data = []
     for color_name, color in state.target_colors.items():  # Loop through all selected colors
         frame_mask = cv2.inRange(frame_lab, tuple(color['min']), tuple(color['max']))
         eroded = cv2.erode(frame_mask, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
@@ -120,7 +121,6 @@ def image_proc(img):
         contour_area = list(filter(lambda c: c[1] > 1000, contour_area))  # Eliminate contours that are too small
 
         if len(contour_area) > 0:
-            data = []
             for contour, area in contour_area:  # Loop through all the contours found
                 rect = cv2.minAreaRect(contour)
                 center_x, center_y = rect[0]
@@ -147,19 +147,27 @@ def image_proc(img):
                 cv2.circle(img, (int(ap[0]), int(ap[1])), 2, (0, 255, 255), 10)
                 cv2.drawContours(img, [box], -1, hiwonder.COLORS[color_name.upper()], 2)
                 cv2.circle(img, (int(center_x), int(center_y)), 1, hiwonder.COLORS[color_name.upper()], 5)
+                angle = rect[2]
+                angle = angle - 90 if angle > 45 else angle
                 rect = list(rect)
                 if c_x:
                     rect[0] = c_x, c_y
                 else:
                     rect[0] = (center_x, center_y)
                 x, y = rect[0]
-                cv2.circle(img, (int(x), int(y)), 1, (255, 255, 255), 5)
                 real_x, real_y, _ = camera_to_world(state.K, state.R, state.T, np.array((x, y)).reshape((1, 1, 2)))[0][0]
-                data.append({"color": color_name.lower(), "x":real_x, "y": real_y})
-                s = "{} x:{:0.2f} y:{:0.2f}".format(color_name.upper(), real_x, real_y)
-                cv2.putText(img, s, (int(center_x), int(center_y)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                s1 = "color: {}".format(color_name)
+                s2 = "x: {:0.1f}mm y: {:0.1f}mm".format(real_x, real_y)
+                s3 = "angle: {:0.1f}deg".format(angle)
 
-            pub.publish(json.dumps(data))
+                cv2.circle(img, (int(x), int(y)), 1, (255, 255, 255), 5)
+                cv2.putText(img, s1, (int(center_x) + 50, int(center_y)   ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                cv2.putText(img, s2, (int(center_x) + 50, int(center_y)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                cv2.putText(img, s3, (int(center_x) + 50, int(center_y)+40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+
+                data.append({"color": color_name.lower(), "x":real_x, "y": real_y, "angle": angle})
+
+    pub.publish(json.dumps(data))
 
     cv2.line(img, (int(img_w / 2 - 10), int(img_h / 2)), (int(img_w / 2 + 10), int(img_h / 2)), (0, 255, 255), 2)
     cv2.line(img, (int(img_w / 2), int(img_h / 2 - 10)), (int(img_w / 2), int(img_h / 2 + 10)), (0, 255, 255), 2)
@@ -192,6 +200,7 @@ if __name__ == '__main__':
     del[state.target_colors['ball']]
     del[state.target_colors['tennis']]
     image_sub = rospy.Subscriber('/usb_cam/image_rect_color', Image, image_callback)
+
     try:
         rospy.spin()
     except KeyboardInterrupt:

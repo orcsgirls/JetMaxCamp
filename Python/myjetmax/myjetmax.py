@@ -2,30 +2,50 @@ import time
 import hiwonder
 import rospy
 import json
+import threading
 from std_msgs.msg import String
 
 # Simple interface to color position AI
-# Note that myjeymax/publisher/color_position_publisher.py needs to be running
+# Note that myjetmax/publisher/color_position_publisher.py needs to be running
 
 class myColorBlocks():
     
     def __init__(self):
         rospy.init_node('color_subscriber')
-        rospy.Subscriber("color_location", String, self.callback)
-        self.color_data = [{"color":"", "x":0, "y":0}]
+        self.sub = rospy.Subscriber("color_location", String, self._callback)
+        self.data = []
+        self._expireTimer()
 
-    def callback(self, data):
-        self.color_data = json.loads(data.data)
+    def _callback(self, data):
+        self.data = json.loads(data.data)
+
+    def _expireTimer(self):
+        self.data = []
+        self.timer = threading.Timer(1, self._expireTimer)
+        self.timer.start()
+
+    def exit(self):
+        self.sub.unregister()
+        self.timer.cancel()
+
+    @property
+    def blocks_detected(self):
+        return len(self.data)
+
+    @property
+    def angle(self, id=0):
+        time.sleep(0.1)
+        return self.data[id]['angle']
 
     @property
     def color(self, id=0):
-        time.sleep(0.5)
-        return self.color_data[id]['color']
+        time.sleep(0.1)
+        return self.data[id]['color']
 
     @property
     def position(self, id=0):
-        time.sleep(0.5)
-        return (self.color_data[id]['x'], self.color_data[id]['y'])
+        time.sleep(0.1)
+        return (self.data[id]['x'], self.data[id]['y'])
 
 
 # Simplified class to be used with coordinate matte
