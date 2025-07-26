@@ -156,7 +156,7 @@ def image_proc(img):
                     rect[0] = (center_x, center_y)
                 x, y = rect[0]
                 real_x, real_y, _ = camera_to_world(state.K, state.R, state.T, np.array((x, y)).reshape((1, 1, 2)))[0][0]
-                s1 = "color: {}".format(color_name)
+                s1 = "id: {}".format(color_name)
                 s2 = "x: {:0.1f}mm".format(real_x)
                 s3 = "y: {:0.1f}mm".format(real_y)
                 s4 = "angle: {:0.1f}deg".format(angle)
@@ -168,7 +168,7 @@ def image_proc(img):
                 cv2.putText(img, s3, (int(center_x) + 50, int(center_y)+20), cv2.FONT_HERSHEY_SIMPLEX, font_size, font_color, 2)
                 cv2.putText(img, s4, (int(center_x) + 50, int(center_y)+40), cv2.FONT_HERSHEY_SIMPLEX, font_size, font_color, 2)
 
-                data.append({"color": color_name.lower(), "x":real_x, "y": real_y, "angle": angle})
+                data.append({"id": color_name.lower(), "x":real_x, "y": real_y, "angle": angle, "distance": None})
 
     pub.publish(json.dumps(data))
 

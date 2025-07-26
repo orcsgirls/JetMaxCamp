@@ -4,6 +4,7 @@ import rospy
 import json
 import threading
 from std_msgs.msg import String
+from types import SimpleNamespace
 
 #---------------------------------------------------------------------------------
 # Simple interface to color position AI
@@ -33,7 +34,7 @@ class myAIBlocks():
         self.timer.cancel()
 
     def _callback(self, data):
-        self.data = json.loads(data.data)
+        self.data = json.loads(data.data, object_hook=lambda d: SimpleNamespace(**d))
 
     def _expireTimer(self):
         self.timer.stop()
@@ -45,8 +46,9 @@ class myAIBlocks():
         return self.data
 
     @property
-    def get_data_wait(self):
+    def get_data_wait(self, what='all'):
         data = []
+        time.sleep(1.0)
         while len(data) < 1:
             data = self.data
         return data

@@ -5,7 +5,7 @@ from std_msgs.msg import String
 def callback(data):
     color_data = json.loads(data.data)
     if len(color_data>0:
-        print(color_data[0]['color'])
+        print(color_data[0]['id'])
     else:
         print('No data')
 
