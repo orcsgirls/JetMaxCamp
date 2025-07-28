@@ -1,6 +1,8 @@
 import time
 import wifi
 import socketpool
+import board
+import digitalio
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
 from os import getenv
 
@@ -11,6 +13,12 @@ from os import getenv
 mqtt_broker = "192.168.37.173"
 mqtt_topic = "control/conveyor"
 
+led = digitalio.DigitalInOut(board.LED)
+led.direction = digitalio.Direction.OUTPUT
+
+conveyor = digitalio.DigitalInOut(board.GP1)
+conveyor.direction = digitalio.Direction.OUTPUT
+
 #---------------------------------------------------------------------------------
 # MQTT Callback
 #---------------------------------------------------------------------------------
@@ -19,8 +27,12 @@ def message(client, topic, message):
     if(topic == mqtt_topic):
         if(message == 'start'):
             print("Starting conveyor")
+            led.value = True
+            conveyor.value = True
         elif(message == 'stop'):
             print("Stopping conveyor")
+            led.value = False
+            conveyor.value = False
         else:
             print(f"ERROR: Invalid message {message}")
 
