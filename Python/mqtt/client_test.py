@@ -21,13 +21,10 @@ device_id = "Conveyor01"
 mqttc = mqtt.Client()
 mqttc.on_message = on_message
 mqttc.on_connect = on_connect
-mqttc.on_subscribe = on_subscribe
-mqttc.on_unsubscribe = on_unsubscribe
 mqttc.on_disconnect = on_disconnect
 
 mqttc.connect("192.168.37.111", 1883, 60)
 mqtt_topic = "control/"+device_id
-mqttc.subscribe(mqtt_topic)
 
 while True:
     command = input(f"Enter command (r,s,x,q) :")
@@ -42,5 +39,4 @@ while True:
     elif command == 'q':
         break
 
-mqttc.unsubscribe(mqtt_topic)
 mqttc.disconnect()
