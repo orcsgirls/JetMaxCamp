@@ -48,7 +48,7 @@ class myAIBlocks():
     @property
     def get_data_wait(self, what='all'):
         data = []
-        time.sleep(1.0)
+        time.sleep(0.005)
         while len(data) < 1:
             data = self.data
         return data
