@@ -24,7 +24,7 @@ def on_message(mqttc, userdata, message):
     if message.topic == mqtt_topic_running:
         running = (message.payload == b'True')
 
-device_id = "Conveyor01"
+device_id = "conveyor01"
 
 mqttc = mqtt.Client()
 mqttc.on_message = on_message

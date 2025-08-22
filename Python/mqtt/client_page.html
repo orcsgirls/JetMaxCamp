@@ -42,8 +42,8 @@
 
   function onConnect() {
     log("Connected to broker");
-    client.subscribe("Conveyor01/running");
-    log("Subscribed to Conveyor01/running");
+    client.subscribe("conveyor01/running");
+    log("Subscribed to conveyor01/running");
   }
 
   function onConnectionLost(responseObject) {
@@ -54,14 +54,14 @@
 
   function onMessageArrived(message) {
     log("Message arrived: [" + message.destinationName + "] " + message.payloadString);
-    if (message.destinationName === "Conveyor01/running") {
+    if (message.destinationName === "conveyor01/running") {
       updateStatus(message.payloadString);
     }
   }
 
   function sendCommand(cmd) {
     const message = new Paho.MQTT.Message(cmd);
-    message.destinationName = "Conveyor01/action";
+    message.destinationName = "conveyor01/action";
     client.send(message);
     log("Sent command: " + cmd);
   }
