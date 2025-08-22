@@ -19,10 +19,10 @@ password = getenv("CIRCUITPY_WIFI_PASSWORD")
 device_id = getenv("DEVICE_ID")
 
 mqtt_broker = "192.168.37.111"
+mqtt_broker_port = 1883
 mqtt_topic_action = device_id+"/action"
 mqtt_topic_config = device_id+"/config"
 mqtt_topic_running = device_id+"/running"
-
 
 #---------------------------------------------------------------------------------
 
@@ -95,7 +95,7 @@ except TypeError:
 
 screen_update("Starting ..", "MQTT")
 
-mqtt_client = MQTT.MQTT(broker=mqtt_broker, port=1883, socket_pool=pool)
+mqtt_client = MQTT.MQTT(broker=mqtt_broker, port=mqtt_broker_port, socket_pool=pool)
 
 # Connect callback handlers to client
 mqtt_client.on_message = message
