@@ -22,7 +22,7 @@ def on_message(mqttc, userdata, message):
     global running
 
     if message.topic == mqtt_topic_running:
-        running = (message.payload == b'True')
+        running = message.payload
 
 device_id = "conveyor01"
 
@@ -41,9 +41,11 @@ mqttc.subscribe(mqtt_topic_running)
 
 while True:
     mqttc.loop()
-    command = input("Command (r,s,?,x,q):")
-    if command == 'r':
-        mqttc.publish(mqtt_topic_action,"start")
+    command = input("Command (f,b,s,?,x,q):")
+    if command == 'f':
+        mqttc.publish(mqtt_topic_action,"forward")
+    elif command == 'b':
+        mqttc.publish(mqtt_topic_action,"backward")
     elif command == 's':
         mqttc.publish(mqtt_topic_action,"stop")
     elif command == '?':

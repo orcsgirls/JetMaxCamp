@@ -15,20 +15,32 @@
 </style>
 </head>
 <body>
-<h2>Conveyor Controller</h2>
+<h2>Conveyor Controller - <span id="deviceid"></span></h2>
 <div>
-  <button onclick="sendCommand('start')">Start</button>
-  <button onclick="sendCommand('stop')">Stop</button>
-  <span>Status: <span id="statusText">Unknown</span> <span id="statusLight" style="background: gray"></span></span>
+  <button id="bforward" onclick="sendCommand('forward')">Forward</button>
+  <button id = "bbackward" onclick="sendCommand('backward')">Backward</button>
+  <button id="bstop" onclick="sendCommand('stop')">Stop</button>
+  <span>Status: 
+  <span id="statusLight" style="background: gray"></span>
+  <span id="statusText">Unknown</span>
+  </span>
 </div>
 <div id="console"></div>
 
 <script>
-  // configure your broker
+  //--------------------------------------------------------------------------------------------
+  // Configure here
+  //--------------------------------------------------------------------------------------------
+  
   const host = "192.168.37.111"; // your broker IP
   const port = 8083; // common WebSocket port (adjust if different)
   const clientId = "conveyorUI-" + Math.random().toString(16).substr(2, 8);
-
+  const device = "conveyor01"
+  
+  //--------------------------------------------------------------------------------------------
+  
+  document.getElementById("deviceid").innerHTML = "<i>"+device+"</i>";
+  
   const client = new Paho.MQTT.Client(host, Number(port), "/mqtt", clientId);
 
   client.onConnectionLost = onConnectionLost;
@@ -42,8 +54,8 @@
 
   function onConnect() {
     log("Connected to broker");
-    client.subscribe("conveyor01/running");
-    log("Subscribed to conveyor01/running");
+    client.subscribe(device+"/running");
+    log("Subscribed to "+device+"/running");
   }
 
   function onConnectionLost(responseObject) {
@@ -61,21 +73,42 @@
 
   function sendCommand(cmd) {
     const message = new Paho.MQTT.Message(cmd);
-    message.destinationName = "conveyor01/action";
+    message.destinationName = device+"/action";
     client.send(message);
     log("Sent command: " + cmd);
   }
 
+  function toggleButtons(disabled) {
+	const bforward = document.getElementById("bforward");
+	const bbackward = document.getElementById("bbackward");
+	const bstop = document.getElementById("bstop");
+
+	bforward.disabled = disabled;
+	bbackward.disabled = disabled;
+	bstop.disabled = disabled;
+  }
+  
   function updateStatus(payload) {
     const light = document.getElementById("statusLight");
     const text = document.getElementById("statusText");
-    if (payload.toLowerCase() === "true") {
-      light.style.background = "green";
-      text.textContent = "Running";
-    } else {
-      light.style.background = "red";
-      text.textContent = "Stopped";
-    }
+    
+	if(payload.toLowerCase().includes("manual")) {
+	  light.style.background = "yellow";
+      text.textContent = "Manual mode";
+	  toggleButtons(true);
+	} else {
+	  toggleButtons(false);
+	  if (payload.toLowerCase() === "forward") {
+	    light.style.background = "green";
+	    text.textContent = "Running forward";
+	  } else if (payload.toLowerCase() === "backward") {
+	    light.style.background = "green";
+	    text.textContent = "Running backward";
+	  } else {
+	    light.style.background = "red";
+	    text.textContent = "Stopped";
+	  }	
+	}
   }
 
   function log(msg) {

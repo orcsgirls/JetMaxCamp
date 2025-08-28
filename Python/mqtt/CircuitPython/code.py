@@ -16,10 +16,10 @@ from os import getenv
 
 ssid = getenv("CIRCUITPY_WIFI_SSID")
 password = getenv("CIRCUITPY_WIFI_PASSWORD")
+mqtt_broker = getenv("MQTT_BROKER")
+mqtt_broker_port = getenv("MQTT_PORT")
 device_id = getenv("DEVICE_ID")
 
-mqtt_broker = "192.168.37.111"
-mqtt_broker_port = 1883
 mqtt_topic_action = device_id+"/action"
 mqtt_topic_config = device_id+"/config"
 mqtt_topic_running = device_id+"/running"
@@ -35,8 +35,16 @@ i2c = busio.I2C(board.GP13, board.GP12)
 screen = Screen(i2c)
 
 # Motor controller
-conveyor = digitalio.DigitalInOut(board.GP1)
-conveyor.direction = digitalio.Direction.OUTPUT
+conveyor_forward = digitalio.DigitalInOut(board.GP20)
+conveyor_forward.direction = digitalio.Direction.OUTPUT
+conveyor_backward = digitalio.DigitalInOut(board.GP21)
+conveyor_backward.direction = digitalio.Direction.OUTPUT
+
+# Switch
+switch_left = digitalio.DigitalInOut(board.GP18)
+switch_left.switch_to_input(pull=digitalio.Pull.UP)
+switch_right = digitalio.DigitalInOut(board.GP19)
+switch_right.switch_to_input(pull=digitalio.Pull.UP)
 
 #---------------------------------------------------------------------------------
 # LCD wrapper
@@ -50,6 +58,37 @@ def screen_update(message, color):
         pass
 
 #---------------------------------------------------------------------------------
+# Check manual
+#---------------------------------------------------------------------------------
+
+def check_manual(manual_forward, manual_backward):
+    if(manual_forward != (not switch_left.value)) or (manual_backward != (not switch_right.value)):
+
+        manual_forward = not switch_left.value
+        manual_backward = not switch_right.value
+
+        if manual_forward:
+            screen_update(f"{device_id}: M<<", "green")
+            led.value = True
+            conveyor_forward.value = True
+            conveyor_backward.value = False
+            mqtt_client.publish(mqtt_topic_running, "manual forward")
+        elif manual_backward:
+            screen_update(f"{device_id}: M>>", "green")
+            led.value = True
+            conveyor_backward.value = True
+            conveyor_forward.value = False
+            mqtt_client.publish(mqtt_topic_running, "manual backward")
+        else:
+            led.value = False
+            conveyor_forward.value = False
+            conveyor_backward.value = False
+            screen_update(f"{device_id}: OFF", "green")
+            mqtt_client.publish(mqtt_topic_running, "stopped")
+
+    return manual_forward, manual_backward
+
+#---------------------------------------------------------------------------------
 # MQTT Callback
 #---------------------------------------------------------------------------------
 
@@ -57,16 +96,27 @@ def message(client, topic, message):
 
     # Action commands
     if(topic == mqtt_topic_action):
-        if(message == 'start'):
-            screen_update(f"{device_id}: ON", "red")
-            led.value = True
-            conveyor.value = True
-            mqtt_client.publish(mqtt_topic_running, "True")
-        elif(message == 'stop'):
-            screen_update(f"{device_id}: OFF", "yellow")
-            led.value = False
-            conveyor.value = False
-            mqtt_client.publish(mqtt_topic_running, "False")
+        if(manual_forward or manual_backward):
+            mqtt_client.publish(mqtt_topic_running, "manual")
+        else:
+            if(message == 'forward'):
+                screen_update(f"{device_id}: <<<", "red")
+                led.value = True
+                conveyor_forward.value = True
+                conveyor_backward.value = False
+                mqtt_client.publish(mqtt_topic_running, "forward")
+            elif(message == 'backward'):
+                screen_update(f"{device_id}: >>>", "red")
+                led.value = True
+                conveyor_backward.value = True
+                conveyor_forward.value = False
+                mqtt_client.publish(mqtt_topic_running, "backward")
+            elif(message == 'stop'):
+                screen_update(f"{device_id}: OFF", "yellow")
+                led.value = False
+                conveyor_forward.value = False
+                conveyor_backward.value = False
+                mqtt_client.publish(mqtt_topic_running, "stopped")
 
     # Config commands
     elif(topic == mqtt_topic_config):
@@ -114,9 +164,15 @@ except:
 # Main loop
 #---------------------------------------------------------------------------------
 
+manual_forward = False
+manual_backward = False
+
 try:
     while True:
-        mqtt_client.loop()
+        manual_forward, manual_backward = check_manual(manual_forward, manual_backward)
+        if not(manual_forward or manual_backward):
+            mqtt_client.loop()
+
 except KeyboardInterrupt:
     mqtt_client.unsubscribe(mqtt_topic)
     mqtt_client.disconnect()
