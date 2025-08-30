@@ -7,6 +7,7 @@ import busio
 import pwmio
 import supervisor
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
+from adafruit_motor import motor
 from rgb1602 import Screen
 from os import getenv
 
@@ -35,10 +36,12 @@ i2c = busio.I2C(board.GP13, board.GP12)
 screen = Screen(i2c)
 
 # Motor controller
-conveyor_forward = digitalio.DigitalInOut(board.GP20)
-conveyor_forward.direction = digitalio.Direction.OUTPUT
-conveyor_backward = digitalio.DigitalInOut(board.GP21)
-conveyor_backward.direction = digitalio.Direction.OUTPUT
+pwm_a = pwmio.PWMOut(board.GP20, frequency=50)
+pwm_b = pwmio.PWMOut(board.GP21, frequency=50)
+conveyor = motor.DCMotor(pwm_a, pwm_b)
+conveyor.decay_mode = motor.SLOW_DECAY
+conveyor_speed = 0.8
+conveyor_manual_speed = 0.6
 
 # Switch
 switch_left = digitalio.DigitalInOut(board.GP18)
@@ -53,7 +56,10 @@ switch_right.switch_to_input(pull=digitalio.Pull.UP)
 def screen_update(message, color):
     try:
         screen.set_css_colour(color)
-        screen.update(f"{wifi.radio.ipv4_address}", message)
+        if wifi_connected:
+            screen.update(f"{wifi.radio.ipv4_address}", message)
+        else:
+            screen.update(f"WiFi not connected", message)
     except:
         pass
 
@@ -68,23 +74,25 @@ def check_manual(manual_forward, manual_backward):
         manual_backward = not switch_right.value
 
         if manual_forward:
-            screen_update(f"{device_id}: M<<", "green")
+            screen_update(f"{device_id}: M<<", "yellow")
             led.value = True
-            conveyor_forward.value = True
-            conveyor_backward.value = False
-            mqtt_client.publish(mqtt_topic_running, "manual forward")
+            conveyor.throttle = conveyor_manual_speed
+            if mqtt_connected:
+                mqtt_client.publish(mqtt_topic_running, "manual forward")
         elif manual_backward:
-            screen_update(f"{device_id}: M>>", "green")
+            screen_update(f"{device_id}: M>>", "yellow")
             led.value = True
-            conveyor_backward.value = True
-            conveyor_forward.value = False
-            mqtt_client.publish(mqtt_topic_running, "manual backward")
+            conveyor.throttle = -conveyor_manual_speed
+            if mqtt_connected:
+                mqtt_client.publish(mqtt_topic_running, "manual backward")
         else:
             led.value = False
-            conveyor_forward.value = False
-            conveyor_backward.value = False
-            screen_update(f"{device_id}: OFF", "green")
-            mqtt_client.publish(mqtt_topic_running, "stopped")
+            conveyor.throttle = 0.0
+            if mqtt_connected:
+                screen_update(f"{device_id}: OFF", "yellow")
+                mqtt_client.publish(mqtt_topic_running, "stopped")
+            else:
+                screen_update("MQTT not found", "red")
 
     return manual_forward, manual_backward
 
@@ -99,23 +107,22 @@ def message(client, topic, message):
         if(manual_forward or manual_backward):
             mqtt_client.publish(mqtt_topic_running, "manual")
         else:
-            if(message == 'forward'):
+            command = message.split(':')
+            speed = float(command[1])/100. if len(command)>1 else conveyor_speed
+            if(command[0] == 'forward'):
                 screen_update(f"{device_id}: <<<", "red")
                 led.value = True
-                conveyor_forward.value = True
-                conveyor_backward.value = False
+                conveyor.throttle = speed
                 mqtt_client.publish(mqtt_topic_running, "forward")
-            elif(message == 'backward'):
+            elif(command[0] == 'backward'):
                 screen_update(f"{device_id}: >>>", "red")
                 led.value = True
-                conveyor_backward.value = True
-                conveyor_forward.value = False
+                conveyor.throttle = -speed
                 mqtt_client.publish(mqtt_topic_running, "backward")
-            elif(message == 'stop'):
+            elif(command[0] == 'stop'):
                 screen_update(f"{device_id}: OFF", "yellow")
                 led.value = False
-                conveyor_forward.value = False
-                conveyor_backward.value = False
+                conveyor.throttle = 0.0
                 mqtt_client.publish(mqtt_topic_running, "stopped")
 
     # Config commands
@@ -128,37 +135,38 @@ def message(client, topic, message):
 # Connecting to WiFi
 #---------------------------------------------------------------------------------
 
-screen_update("Starting ..", "WiFi")
+wifi_connected = False
+mqtt_connected = False
+
+screen_update("Connecting ..", "red")
 
 try:
     wifi.radio.connect(ssid, password)
-    pool = socketpool.SocketPool(wifi.radio)
     print(f"Connected to WiFi {ssid}")
-except TypeError:
+    wifi_connected = True
+except ConnectionError:
+    screen_update("WiFi failed", "red")
     print(f"Could not connect to WiFi {ssid}")
-    raise
-
 
 #---------------------------------------------------------------------------------
 # Setting up MQTT client
 #---------------------------------------------------------------------------------
 
-screen_update("Starting ..", "MQTT")
+if wifi_connected:
+    screen_update("MQTT connecting ..", "red")
 
-mqtt_client = MQTT.MQTT(broker=mqtt_broker, port=mqtt_broker_port, socket_pool=pool)
+    pool = socketpool.SocketPool(wifi.radio)
+    mqtt_client = MQTT.MQTT(broker=mqtt_broker, port=mqtt_broker_port, socket_pool=pool)
+    mqtt_client.on_message = message
 
-# Connect callback handlers to client
-mqtt_client.on_message = message
-
-# Connect and subscribe to topic
-try:
-    mqtt_client.connect()
-    mqtt_client.subscribe(mqtt_topic_action)
-    mqtt_client.subscribe(mqtt_topic_config)
-    screen_update(f"{device_id}: OFF", "yellow")
-except:
-    screen_update("MQTT Error!!", "red")
-    raise
+    try:
+        mqtt_client.connect()
+        mqtt_client.subscribe(mqtt_topic_action)
+        mqtt_client.subscribe(mqtt_topic_config)
+        screen_update(f"{device_id}: OFF", "yellow")
+        mqtt_connected = True
+    except:
+        screen_update("MQTT not found", "red")
 
 #---------------------------------------------------------------------------------
 # Main loop
@@ -170,7 +178,7 @@ manual_backward = False
 try:
     while True:
         manual_forward, manual_backward = check_manual(manual_forward, manual_backward)
-        if not(manual_forward or manual_backward):
+        if not(manual_forward or manual_backward) and mqtt_connected:
             mqtt_client.loop()
 
 except KeyboardInterrupt:

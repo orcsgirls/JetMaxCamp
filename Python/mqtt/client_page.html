@@ -9,7 +9,7 @@
 
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; }
-  button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+  button, range { margin: 0px; margin-bottom:10px; padding: 5px 20px; font-size: 16px; }
   #statusLight { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
   #console { margin-top: 20px; background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace; }
 </style>
@@ -17,13 +17,20 @@
 <body>
 <h2>Conveyor Controller - <span id="deviceid"></span></h2>
 <div>
-  <button id="bforward" onclick="sendCommand('forward')">Forward</button>
-  <button id = "bbackward" onclick="sendCommand('backward')">Backward</button>
+  <button id="bforward" 
+          onclick="sendCommand('forward:'+document.getElementById('speed').value)">Forward</button>
+  <button id = "bbackward" 
+          onclick="sendCommand('backward:'+document.getElementById('speed').value)">Backward</button>
   <button id="bstop" onclick="sendCommand('stop')">Stop</button>
-  <span>Status: 
+
+  <label for="speed">Speed:</label>
+  <input type="range" id="speed" name="speed" min="20" max="100" step="5" value="90"/>
+  <label id="value"></label><br> 
+</div>
+ 
+ <div>Status: 
   <span id="statusLight" style="background: gray"></span>
   <span id="statusText">Unknown</span>
-  </span>
 </div>
 <div id="console"></div>
 
@@ -40,6 +47,7 @@
   //--------------------------------------------------------------------------------------------
   
   document.getElementById("deviceid").innerHTML = "<i>"+device+"</i>";
+  var slider = document.getElementById("speed");
   
   const client = new Paho.MQTT.Client(host, Number(port), "/mqtt", clientId);
 
@@ -117,5 +125,18 @@
     consoleDiv.scrollTop = consoleDiv.scrollHeight;
   }
 </script>
+
+<script>
+// Slider stuff
+var slider = document.getElementById("speed");
+var output = document.getElementById("value");
+output.innerHTML = slider.value; // Display the default slider value
+
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+  output.innerHTML = this.value;
+}
+</script>
+
 </body>
 </html>

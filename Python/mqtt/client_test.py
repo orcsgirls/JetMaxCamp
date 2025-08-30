@@ -41,7 +41,7 @@ mqttc.subscribe(mqtt_topic_running)
 
 while True:
     mqttc.loop()
-    command = input("Command (f,b,s,?,x,q):")
+    command = input("Command (f,b,s,c,?,x,q):")
     if command == 'f':
         mqttc.publish(mqtt_topic_action,"forward")
     elif command == 'b':
@@ -52,6 +52,9 @@ while True:
         print (f"{device_id} running - {running}")
     elif command == 'x':
         mqttc.publish(mqtt_topic_config,"reset")
+    elif command == 'c':
+        payload = input("Payload: ")
+        mqttc.publish(mqtt_topic_action, payload)
     elif command == 'q':
         break
 
