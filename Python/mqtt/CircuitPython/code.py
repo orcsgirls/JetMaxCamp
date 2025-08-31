@@ -164,6 +164,7 @@ if wifi_connected:
         mqtt_client.subscribe(mqtt_topic_action)
         mqtt_client.subscribe(mqtt_topic_config)
         screen_update(f"{device_id}: OFF", "yellow")
+        print(f"Connected to MQTT broker")
         mqtt_connected = True
     except:
         screen_update("MQTT not found", "red")
