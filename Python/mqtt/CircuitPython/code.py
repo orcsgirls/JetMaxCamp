@@ -36,17 +36,17 @@ i2c = busio.I2C(board.GP13, board.GP12)
 screen = Screen(i2c)
 
 # Motor controller
-pwm_a = pwmio.PWMOut(board.GP20, frequency=50)
-pwm_b = pwmio.PWMOut(board.GP21, frequency=50)
+pwm_a = pwmio.PWMOut(board.GP21, frequency=50)
+pwm_b = pwmio.PWMOut(board.GP20, frequency=50)
 conveyor = motor.DCMotor(pwm_a, pwm_b)
 conveyor.decay_mode = motor.SLOW_DECAY
 conveyor_speed = 0.8
-conveyor_manual_speed = 0.6
+conveyor_manual_speed = 0.8
 
 # Switch
-switch_left = digitalio.DigitalInOut(board.GP18)
+switch_left = digitalio.DigitalInOut(board.GP19)
 switch_left.switch_to_input(pull=digitalio.Pull.UP)
-switch_right = digitalio.DigitalInOut(board.GP19)
+switch_right = digitalio.DigitalInOut(board.GP18)
 switch_right.switch_to_input(pull=digitalio.Pull.UP)
 
 #---------------------------------------------------------------------------------
@@ -166,7 +166,8 @@ if wifi_connected:
         screen_update(f"{device_id}: OFF", "yellow")
         print(f"Connected to MQTT broker")
         mqtt_connected = True
-    except:
+    except Exception as e:
+        print(f"MQTT Error: {e}")
         screen_update("MQTT not found", "red")
 
 #---------------------------------------------------------------------------------
