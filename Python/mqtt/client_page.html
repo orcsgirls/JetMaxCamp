@@ -22,13 +22,12 @@
   <button id = "bbackward" 
           onclick="sendCommand('backward:'+document.getElementById('speed').value)">Backward</button>
   <button id="bstop" onclick="sendCommand('stop')">Stop</button>
-
+  <br>
   <label for="speed">Speed:</label>
   <input type="range" id="speed" name="speed" min="20" max="100" step="5" value="90"/>
-  <label id="value"></label><br> 
-</div>
- 
- <div>Status: 
+  <label id="value"></label> 
+  <br>
+  Status: 
   <span id="statusLight" style="background: gray"></span>
   <span id="statusText">Unknown</span>
 </div>
