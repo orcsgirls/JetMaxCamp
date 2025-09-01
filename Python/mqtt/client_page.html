@@ -42,7 +42,11 @@
   const host = "192.168.37.111"; // your broker IP
   const port = 8083; // common WebSocket port (adjust if different)
   const clientId = "conveyorUI-" + Math.random().toString(16).substr(2, 8);
-  const device = "conveyor01"
+  const urlParams = new URLSearchParams(window.location.search);
+  var device = urlParams.get('device');
+  if (device == null) {
+	device = "conveyor01"
+  }
   
   //--------------------------------------------------------------------------------------------
   

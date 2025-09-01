@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Conveyor Controller (MQTT)</title>
+<!-- Correct Paho MQTT JS include -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  button, range { margin: 0px; margin-bottom:10px; padding: 5px 20px; font-size: 16px; }
+  #statusLight01{ width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+  #statusLight02{ width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+  #statusLight03{ width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+  #statusLight04{ width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+  #console { margin-top: 20px; background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>Conveyor Master Control</h1>
+
+  <b>Conveyor 01</b> -- 
+  <button id="bforward" 
+          onclick="sendCommand('forward:'+document.getElementById('speed1').value, '01')">Forward</button>
+  <button id = "bbackward" 
+          onclick="sendCommand('backward:'+document.getElementById('speed1').value, '01')">Backward</button>
+  <button id="bstop" onclick="sendCommand('stop', '01')">Stop</button>
+
+  <label for="speed1">Speed:</label>
+  <input type="range" id="speed1" name="speed1" min="20" max="100" step="5" value="60"/> 
+  Status: 
+  <span id="statusLight01" style="background: gray"></span>
+  <span id="statusText01">Unknown</span>
+</div>
+
+<div>
+  <b>Conveyor 02</b> -- 
+  <button id="bforward" 
+          onclick="sendCommand('forward:'+document.getElementById('speed2').value, '02')">Forward</button>
+  <button id = "bbackward" 
+          onclick="sendCommand('backward:'+document.getElementById('speed2').value, '02')">Backward</button>
+  <button id="bstop" onclick="sendCommand('stop', '02')">Stop</button>
+
+  <label for="speed2">Speed:</label>
+  <input type="range" id="speed2" name="speed2" min="20" max="100" step="5" value="60"/>
+  Status: 
+  <span id="statusLight02" style="background: gray"></span>
+  <span id="statusText02">Unknown</span>
+</div>
+
+<div>
+  <b>Conveyor 03</b> -- 
+  <button id="bforward" 
+          onclick="sendCommand('forward:'+document.getElementById('speed3').value, '03')">Forward</button>
+  <button id = "bbackward" 
+          onclick="sendCommand('backward:'+document.getElementById('speed3').value, '03')">Backward</button>
+  <button id="bstop" onclick="sendCommand('stop', '03')">Stop</button>
+
+  <label for="speed3">Speed:</label>
+  <input type="range" id="speed3" name="speed3" min="20" max="100" step="5" value="60"/>
+  Status: 
+  <span id="statusLight03" style="background: gray"></span>
+  <span id="statusText03">Unknown</span>
+</div>
+
+<div>
+  <b>Conveyor 04</b> -- 
+  <button id="bforward" 
+          onclick="sendCommand('forward:'+document.getElementById('speed4').value, '04')">Forward</button>
+  <button id = "bbackward" 
+          onclick="sendCommand('backward:'+document.getElementById('speed4').value, '04')">Backward</button>
+  <button id="bstop" onclick="sendCommand('stop', '04')">Stop</button>
+
+  <label for="speed4">Speed:</label>
+  <input type="range" id="speed4" name="speed4" min="20" max="100" step="5" value="60"/>
+  Status: 
+  <span id="statusLight04" style="background: gray"></span>
+  <span id="statusText04">Unknown</span>
+</div>
+
+<div id="console"></div>
+
+<script>
+  //--------------------------------------------------------------------------------------------
+  // Configure here
+  //--------------------------------------------------------------------------------------------
+  
+  const host = "192.168.37.111"; // your broker IP
+  const port = 8083; // common WebSocket port (adjust if different)
+  const clientId = "conveyorUI-" + Math.random().toString(16).substr(2, 8);
+  device = "conveyor01"
+  
+  //--------------------------------------------------------------------------------------------
+  
+  var slider = document.getElementById("speed");
+  
+  const client = new Paho.MQTT.Client(host, Number(port), "/mqtt", clientId);
+
+  client.onConnectionLost = onConnectionLost;
+  client.onMessageArrived = onMessageArrived;
+
+  client.connect({
+    useSSL: false,
+    onSuccess: onConnect,
+    onFailure: (err) => log("Connection failed: " + JSON.stringify(err))
+  });
+
+  function onConnect() {
+    log("Connected to broker");
+    client.subscribe("conveyor01/running");
+    client.subscribe("conveyor02/running");
+    client.subscribe("conveyor03/running");
+    client.subscribe("conveyor04/running");
+  }
+
+  function onConnectionLost(responseObject) {
+    if (responseObject.errorCode !== 0) {
+      log("Connection lost: " + responseObject.errorMessage);
+    }
+  }
+
+  function onMessageArrived(message) {
+    log("Message arrived: [" + message.destinationName + "] " + message.payloadString);
+    if (message.destinationName === "conveyor01/running") {
+      updateStatus(message.payloadString, "01");
+	}
+	else if (message.destinationName === "conveyor02/running") {
+      updateStatus(message.payloadString, "02");
+    }
+	else if (message.destinationName === "conveyor03/running") {
+      updateStatus(message.payloadString, "03");
+    }
+	else if (message.destinationName === "conveyor04/running") {
+      updateStatus(message.payloadString, "04");
+    }
+  }
+
+  function sendCommand(cmd, id) {
+    const message = new Paho.MQTT.Message(cmd);
+    message.destinationName = "conveyor"+id+"/action";
+    client.send(message);
+    log("Sent command: " + cmd);
+  }
+
+  function updateStatus(payload, id) {
+    const light = document.getElementById("statusLight"+id);
+    const text = document.getElementById("statusText"+id);
+    
+	if(payload.toLowerCase().includes("manual")) {
+	  light.style.background = "yellow";
+      text.textContent = "Manual mode";
+	} else {
+	  if (payload.toLowerCase() === "forward") {
+	    light.style.background = "green";
+	    text.textContent = "Running forward";
+	  } else if (payload.toLowerCase() === "backward") {
+	    light.style.background = "green";
+	    text.textContent = "Running backward";
+	  } else {
+	    light.style.background = "red";
+	    text.textContent = "Stopped";
+	  }	
+	}
+  }
+
+  function log(msg) {
+    const consoleDiv = document.getElementById("console");
+    consoleDiv.innerHTML += "<div>> " + msg + "</div>";
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
