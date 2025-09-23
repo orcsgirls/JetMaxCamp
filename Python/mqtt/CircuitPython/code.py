@@ -184,6 +184,7 @@ try:
             mqtt_client.loop()
 
 except KeyboardInterrupt:
-    mqtt_client.unsubscribe(mqtt_topic)
-    mqtt_client.disconnect()
+    if mqtt_connected:
+        mqtt_client.unsubscribe(mqtt_topic)
+        mqtt_client.disconnect()
     screen.set_css_colour("black")

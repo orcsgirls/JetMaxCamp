@@ -1,5 +1,13 @@
 import paho.mqtt.client as mqtt
 import time
+import argparse
+
+parser = argparse.ArgumentParser(description="Conveyor controller")
+parser.add_argument("--device", nargs="?", type=str, default="conveyor01", help="Device ID")
+args = parser.parse_args()
+
+device_id = args.device
+print(f"Controlling device {device_id}")
 
 running = True
 
@@ -24,7 +32,6 @@ def on_message(mqttc, userdata, message):
     if message.topic == mqtt_topic_running:
         running = message.payload
 
-device_id = "conveyor01"
 
 mqttc = mqtt.Client()
 mqttc.on_message = on_message
