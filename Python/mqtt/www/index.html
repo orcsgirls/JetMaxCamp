@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MQTT Home</title>
+
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  button, range { margin: 0px; margin-bottom:10px; padding: 5px 20px; font-size: 16px; }
+  #statusLight { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+  #console { margin-top: 20px; background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace; } .button { padding: 1px 6px; border: 1px outset buttonborder; border-radius: 3px;
+  color: buttontext; background-color: buttonface; text-decoration: none; }
+  .alert-panel {padding: 5px;  margin-bottom: 5px;  border: 1px solid transparent; border-radius: 4px;  
+  font-family: sans-serif;  font-size: 16px;  color: #8a6d3b;  background-color: #fcf8e3;
+  border-color: #faebcc;}}
+</style>
+</head>
+<body>
+<h2>MQTT Controls</h2>
+<div class="alert-panel">
+  <p>Make sure you are controlling <b>your</b> JetMax arm or conveyor!</p>
+</div> 
+
+<hr>
+<h4>General controls</h4>
+<button onclick="location.href='console.html'" type="button">MQTT Console</button>
+<button onclick="location.href='send.html'" type="button">MQTT Send Command</button>
+<hr>
+<h4>Conveyors</h4>
+<button onclick="location.href='conveyor_control.html?device=conveyor01'" type="button">Conveyor01</button>
+<button onclick="location.href='conveyor_control.html?device=conveyor02'" type="button">Conveyor02</button>
+<button onclick="location.href='conveyor_control.html?device=conveyor03'" type="button">Conveyor03</button>
+<button onclick="location.href='conveyor_control.html?device=conveyor04'" type="button">Conveyor04</button>
+<hr>
+&copy; ORCSGirls, 2025
+</body>
+</html>

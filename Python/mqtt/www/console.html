@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MQTT Console</title>
+<script src="js/mqttws31.min.js" type="text/javascript"></script>
+
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  button, range { margin: 0px; margin-bottom:10px; padding: 5px 20px; font-size: 16px; }
+  #statusLight { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+  #console { margin-top: 20px; background: #111; color: #0f0; padding: 10px; height: 500px; overflow-y: scroll; font-family: monospace; }}
+</style>
+</head>
+
+<body>
+<h2>MQTT Console</h2>
+<div id="console"></div>
+
+<script>
+  //--------------------------------------------------------------------------------------------
+  // Configure here
+  //--------------------------------------------------------------------------------------------
+  
+  const host = "192.168.37.111"; // your broker IP
+  const port = 8083; // common WebSocket port (adjust if different)
+  const clientId = "conveyorUI-" + Math.random().toString(16).substr(2, 8);
+  
+  //--------------------------------------------------------------------------------------------
+  
+  const client = new Paho.MQTT.Client(host, Number(port), "/mqtt", clientId);
+  client.onMessageArrived = onMessageArrived;
+
+  client.connect({
+    useSSL: false,
+    onSuccess: onConnect,
+    onFailure: (err) => log("Connection failed: " + JSON.stringify(err))
+  });
+
+  function onConnect() {
+    log("Connected to broker");
+	client.subscribe("#");
+  }
+
+  function onMessageArrived(message) {
+    log("Message arrived: [" + message.destinationName + "] " + message.payloadString);
+  }
+
+  function log(msg) {
+    const consoleDiv = document.getElementById("console");
+    consoleDiv.innerHTML += "<div>> " + msg + "</div>";
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+  }
+</script>
+</body>
+</html>
