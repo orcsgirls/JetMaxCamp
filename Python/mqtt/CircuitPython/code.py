@@ -49,6 +49,10 @@ switch_left.switch_to_input(pull=digitalio.Pull.UP)
 switch_right = digitalio.DigitalInOut(board.GP18)
 switch_right.switch_to_input(pull=digitalio.Pull.UP)
 
+# Status
+wifi_connected = False
+mqtt_connected = False
+
 #---------------------------------------------------------------------------------
 # LCD wrapper
 #---------------------------------------------------------------------------------
@@ -135,9 +139,6 @@ def message(client, topic, message):
 # Connecting to WiFi
 #---------------------------------------------------------------------------------
 
-wifi_connected = False
-mqtt_connected = False
-
 screen_update("Connecting ..", "red")
 
 try:
@@ -149,6 +150,33 @@ except ConnectionError:
     print(f"Could not connect to WiFi {ssid}")
 
 #---------------------------------------------------------------------------------
+# MQTT connect
+#---------------------------------------------------------------------------------
+
+def mqtt_connect(mqtt_client,topic_action, topic_config):
+
+    mqtt_connected = False
+    reconnect_try_max = 100
+    screen_update("MQTT connecting ..", "red")
+
+    for t in range(0, reconnect_try_max):
+        try:
+            mqtt_client.connect()
+            mqtt_client.subscribe(topic_action)
+            mqtt_client.subscribe(topic_config)
+            screen_update(f"{device_id}: OFF", "yellow")
+            print(f"Connected to MQTT broker")
+            mqtt_connected = True
+        except Exception as e:
+            screen_update("MQTT retrying ..", "red")
+            print(f"MQTT failure, retrying ..")
+            time.sleep(10)
+        else:
+            break
+
+    return mqtt_connected
+
+#---------------------------------------------------------------------------------
 # Setting up MQTT client
 #---------------------------------------------------------------------------------
 
@@ -158,17 +186,7 @@ if wifi_connected:
     pool = socketpool.SocketPool(wifi.radio)
     mqtt_client = MQTT.MQTT(broker=mqtt_broker, port=mqtt_broker_port, socket_pool=pool)
     mqtt_client.on_message = message
-
-    try:
-        mqtt_client.connect()
-        mqtt_client.subscribe(mqtt_topic_action)
-        mqtt_client.subscribe(mqtt_topic_config)
-        screen_update(f"{device_id}: OFF", "yellow")
-        print(f"Connected to MQTT broker")
-        mqtt_connected = True
-    except Exception as e:
-        print(f"MQTT Error: {e}")
-        screen_update("MQTT not found", "red")
+    mqtt_connected = mqtt_connect(mqtt_client, mqtt_topic_action, mqtt_topic_config)
 
 #---------------------------------------------------------------------------------
 # Main loop
@@ -181,10 +199,12 @@ try:
     while True:
         manual_forward, manual_backward = check_manual(manual_forward, manual_backward)
         if not(manual_forward or manual_backward) and mqtt_connected:
-            mqtt_client.loop()
+            try:
+                mqtt_client.loop()
+            except Exception as e:
+                mqtt_connect(mqtt_client, mqtt_topic_action, mqtt_topic_config)
 
 except KeyboardInterrupt:
     if mqtt_connected:
-        mqtt_client.unsubscribe(mqtt_topic)
         mqtt_client.disconnect()
     screen.set_css_colour("black")
