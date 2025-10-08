@@ -8,7 +8,9 @@ with myAIBlocks(what="apriltag") as blocks, myJetMax() as jetmax:
   jetmax.go_home()
   time.sleep(1.0)
 
-  found = blocks.get_data_wait
+  print ("Looking for blocks ..")
+
+  found = blocks.get_data_wait()
   (block_x, block_y) = (found[0].x, found[0].y)
   print ("Found block at: ", block_x, block_y)
 

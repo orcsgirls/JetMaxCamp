@@ -46,10 +46,7 @@ def jetmax_home():
 
 # Main loop
 with myJetMax() as jetmax:
-    try:
-        print(f"{device_id} waiting for MQTT commands ..")
-        while True:
-            mqttc.loop()
-    except KeyboardInterrupt:
-        print("Aborting ..")
+    print(f"{device_id} waiting for MQTT commands ..")
+    while True:
+        mqttc.loop()
 
