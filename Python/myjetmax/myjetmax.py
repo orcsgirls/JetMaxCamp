@@ -41,17 +41,22 @@ class myAIBlocks():
         self.data = []
         self.timer.start()
 
-    @property
-    def get_data(self):
-        return self.data
+    def _filter(self, data, what):
+        if(what=='all'):
+            return data
+        else:
+            return [obj for obj in data if obj.id == what]
 
-    @property
     def get_data_wait(self, what='all'):
         data = []
         time.sleep(0.005)
         while len(data) < 1:
-            data = self.data
+            data = self._filter(self.get_data, what)
         return data
+
+    @property
+    def get_data(self):
+        return self.data
 
 #---------------------------------------------------------------------------------
 # Simplified class for JetMax Arm to be used with coordinate matte
